@@ -1,0 +1,18 @@
+Homework 1:
+
+Students will use the template code provided on the Github to write a TCP client and server. 
+The server should be a single-process non-blocking server that can accept multiple concurrent 
+connections and handle user input. When the user first connects, they should receive a list 
+of possible commands and what those commands do. These should include
+
+hello - displays a greeting (student's choice)
+1, 2, 3, 4, 5 - displays information to the user (student's choice, but each number should 
+provide different info)
+passwd - Does nothing yet, but in HW2, will allow them to change their password
+exit - disconnects the user
+menu - should display the list of available commands in a clean, readable format
+Commands not on this list should display an error message.
+
+Recommend creating additional classes for modularity and reusability. Add additional files
+to src/Makefile.am and rerun autoreconf and ./configure to integrate support for your new
+files. 
