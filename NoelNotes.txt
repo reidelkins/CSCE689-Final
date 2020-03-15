@@ -1,0 +1,30 @@
+// Warning – transcribed by hand, may have syntax bugs but algorithm should work
+ 
+// First, make sure these are there:
+ 
+#include <boost/lexical_cast.hpp>
+#include <boost/multiprecision/cpp_int.hpp>
+#include <iostream>
+ 
+// A big number - keep in mind if you pass in a big number that is not a string, it will overload the compiler's native variables (long=2^64)
+// Boost cpp_int (big numbers) can all be initialized with a string number
+boost::multiprecision::uint128_t bignum("341432154326543243543254325432");
+ 
+// displays fine
+std::cout << "num1: " << bignum << "\n";
+ 
+// Convert it to a string (lots of ways to do this)
+std::string bignumstr;
+bignumstr  = boost::lexical_cast<std::string>(bignum);
+ 
+// put it into a byte vector for transmission
+std::vector<uint8_t> buf(bignumstr.begin(), bignumstr.end());
+ 
+// displays fine too
+std::cout << "num2: " << bignumstr << "\n";
+ 
+// Back using an explicit lexical cast (other ways to do this)
+bignum = boost::lexical_cast<uint128_t>(bignumstr.c_str());
+ 
+// displays fine
+Std::cout << "num3: " << bignum << "\n";
