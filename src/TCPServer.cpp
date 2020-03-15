@@ -17,6 +17,11 @@
 TCPServer::TCPServer() : Server() {
     FD_ZERO(&master);
     FD_ZERO(&read_fds);
+    LARGEINT find("463463374607431768211451");
+    
+    original_value = find;
+    current_value = original_value;
+    factor();
 }
 
 /**
@@ -82,20 +87,6 @@ void TCPServer::sockBind(const char *ip_addr, short unsigned int port){
 **/
    void TCPServer::sockSend(int sock, const char* msg){
        send(sock, msg, strlen(msg), 0);
-}
-
-
-/**
-* Helper method that just reads in a message and echos the message.  I made an echo server
-* at first then extended it into the final code, so this method might not be used in the
-* final submission. 
-**/
-void TCPServer::readEcho(){
-    zeroBuf();
-    valread = read (new_sock, buf, 1024);
-    std::cout << buf << std::endl;
-    buf[valread] = '\0';
-    sockSend(new_sock, &buf[0]);
 }
 
 
@@ -168,6 +159,7 @@ void TCPServer::handleNewClient(){
             this->biggestFD = this->new_sock;
         }
         std::cout << "New connection on socket " << this->new_sock << std::endl; // Notify the server of the new connection
+        //sockSend(this->new_sock, getCurrentValue().str());
         //sockSend(this->new_sock, initMessage.c_str()); // Send the welcome message
     }
 }
@@ -178,92 +170,27 @@ void TCPServer::handleNewClient(){
 **/
 void TCPServer::handleExistingClient(int i){
     zeroBuf();
-    if( (this->valread = read (i, this->buf, 1024)) <= 0){
-        // recieved an error, or connection was closed by client
-        if (this->valread == 0){
-            // Client closed connection
-            std::cout << "The client on socket: " << i << " closed the connection." << std::endl; 
-        } else {
-            perror("Failure in read() in TCPServer.\n");
-        }
-        close(i); // Make sure we close out the socket
-        FD_CLR(i, &(this->master)); // Remove the client socket from the master FD list
-    } else {
-        // Handle the data from the client
-        //parseData(i);
-        // <TODO> change this 
+    // if( (this->valread = read (i, this->buf, 1024)) <= 0){
+    //     // recieved an error, or connection was closed by client
+    //     if (this->valread == 0){
+    //         // Client closed connection
+    //         std::cout << "The client on socket: " << i << " closed the connection." << std::endl; 
+    //     } else {
+    //         perror("Failure in read() in TCPServer.\n");
+    //     }
+    //     close(i); // Make sure we close out the socket
+    //     FD_CLR(i, &(this->master)); // Remove the client socket from the master FD list
+    // } else {
+    //     // Handle the data from the client
+    //     //parseData(i);
+    //     // <TODO> change this 
 
-        // This is how you send something to socket i
-        const char* hello = "1000";
-        sockSend(i, hello);
-    }
+    //     // This is how you send something to socket i
+    //     const char* hello = "1000";
+    //     sockSend(i, hello);
+    // }
+
 }
-
-
-/**
-* Helper function that will parse passed in data from a client and send data back to the client
-* 
-* Input: the FD that we are parsing the input for, which is used to send the correct message back
-**/
-void TCPServer::parseData(int i){
-    // buf has the data that was passed in from the client, so check it for our menu items:
-    if(strcmp(buf, "hello") == 0){
-        const char* hello = "Welcome to Capt White's TCPserver for Distributed Systems!";
-        sockSend(i, hello); 
-        std::cout << "User on socket " << i << " sent hello command" << std::endl;
-    } else if(strcmp(buf, "1") == 0){
-        const char* one = "C++ got the OOP features from Simula67 Programming language.";
-        sockSend(i, one); 
-        std::cout << "User on socket " << i << " sent 1 command" << std::endl;
-    } else if(strcmp(buf, "2") == 0){
-        const char* two = "Not purely object oriented: We can write C++ code without using classes and it will compile without showing any error message.";
-        sockSend(i, two); 
-        std::cout << "User on socket " << i << " sent 2 command" << std::endl;
-    } else if(strcmp(buf, "3") == 0){
-        const char* three = "C and C++ invented at same place i.e. at T bell laboratories.";
-        sockSend(i, three); 
-        std::cout << "User on socket " << i << " sent 3 command" << std::endl;
-    } else if(strcmp(buf, "4") == 0){
-        const char* four = "Concept of reference variables: operator overloading borrowed from Algol 68 programming language.";
-        sockSend(i, four); 
-        std::cout << "User on socket " << i << " sent 4 command" << std::endl;
-    } else if(strcmp(buf, "5") == 0){
-        const char* five = "A function is the minimum requirement for a C++ program to run.";
-        sockSend(i, five); 
-        std::cout << "User on socket " << i << " sent 5 command" << std::endl;
-    } else if(strcmp(buf, "passwd") == 0){
-        const char* passwd = "This feature is not currently implemented.";
-        sockSend(i, passwd); 
-        std::cout << "User on socket " << i << " sent passwd command" << std::endl;
-    } else if(strcmp(buf, "exit") == 0){
-        const char* exitCmd = "Have a great day! ";
-        sockSend(i, exitCmd); 
-        close(i); // Make sure we close out the socket
-        FD_CLR(i, &(this->master)); // Remove the client socket from the master FD list
-        std::cout << "The client on socket: " << i << " closed the connection." << std::endl; 
-    } else if(strcmp(buf, "menu") == 0){
-        if(secretMenu){
-            sockSend(i, this->secretMenuText.c_str()); 
-        } else {
-            sockSend(i, this->commands.c_str()); 
-        }
-    } else if(strcmp(buf, "uuddlrlrab") == 0){
-        const char* konami = "You cracked the code!";
-        sockSend(i, konami); 
-        std::cout << "The client on socket: " << i << " cracked the code, we must adapt..." << std::endl; 
-        this->secretMenu = true; 
-    } else {
-        sockSend(i, this->incorrect.c_str()); 
-        std::cout << "User on socket " << i << " sent an incorrect command" << std::endl;
-    }
-    
-}
-
-
-//============================================================================================================================================================================
-/** 
-* Given methods to implement below: 
-**/
 
 
 /**********************************************************************************************
@@ -308,7 +235,9 @@ void TCPServer::listenSvr() {
             if(FD_ISSET(i, &read_fds)){ 
                 if(i == this->server_sock){ 
                     // If i is our server_sock then we have a new connection
+                    std::cout << "before handle new client\n";
                     handleNewClient();
+                    std::cout << "after handle new client\n";
                 } else { 
                     // Else a client sent us something
                     handleExistingClient(i);
@@ -335,4 +264,155 @@ void TCPServer::shutdown() {
         perror("Failure in close() in TCPServer.");
         exit(EXIT_FAILURE);
     }
+}
+
+/**
+* factor - Calculates a single prime of the given number and recursively calls
+*          itself to continue calculating primes of the remaining number. Variation
+*          on the algorithm by Yash Varyani on GeeksForGeeks. Uses a single
+*          process 
+**/
+void TCPServer::factor(){
+
+   // First, take care of the '2' factors
+   LARGEINT newval = getCurrentValue();
+   
+   while (newval % 2 == 0) {
+      primes.push_back(2);
+
+      std::cout << "Prime Found: 2\n";
+
+      newval = newval / 2;
+   } 
+
+   // Now the 3s
+   while (newval % 3 == 0) {
+      primes.push_back(3);
+      std::cout << "Prime Found: 3\n";
+      newval = newval / 3;
+   }
+   changeValue(newval);
+
+   // Now use Pollards Rho to figure out the rest. As it's stochastic, we don't know
+   // how long it will take to find an answer. Should return the final two primes
+   //factor(newval); 
+}
+
+/**
+* factor - same as above function, but can be iteratively called as numbers are
+*          discovered as the number n can be passed in
+**/
+void TCPServer::factor(LARGEINT n) {
+    // already prime
+    if (n == 1) {
+        return;
+    }
+
+    std::cout << "Factoring: " << n << std::endl;
+
+    bool div_found = false;
+    unsigned int iters = 0;
+
+    while (!div_found) {
+      
+        std::cout << "Starting iteration: " << iters << std::endl;
+
+        // If we have tried Pollards Rho a specified number of times, run the
+        // costly prime check to see if this is a prime number. Also, increment
+        // iters after the check
+        if (iters++ == primecheck_depth) {
+            std::cout << "Pollards rho timed out, checking if the following is prime: " << n << std::endl;
+
+            LARGEINT divisor;
+            if (isPrimeBF(n, divisor)) {
+                std::cout << "Prime found: " << n << std::endl;
+
+                primes.push_back(n);
+                return;
+            } else {   // We found a prime divisor, save it and keep finding primes
+                std::cout << "Prime found: " << divisor << std::endl;
+
+                primes.push_back(divisor);
+                return factor(n / divisor);
+            }				
+        }
+
+        // We try to get a divisor using Pollards Rho
+        //LARGEINT d = calcPollardsRho(n);
+        LARGEINT d = 0;
+        //CHANGE
+
+        if (d != n) {
+            std::cout << "Divisor found: " << d << std::endl;
+
+            // Factor the divisor
+            factor(d);
+
+            // Now the remaining number
+            factor((LARGEINT) (n/d));
+            return;
+        }
+
+        // If d == n, then we re-randomize and continue the search up to the prime check depth
+    }
+    throw std::runtime_error("Reached end of function--this should not have happened.");
+    return;
+}
+
+/*******************************************************************************
+* Uses the Primality Test algorithm with the 6k optimization, can be found:
+*    https://en.wikipedia.org/wiki/Primality_test
+*             
+*
+* Params:  n - the number to test for a prime 
+*   divisor -return value of the discovered divisor if not prime
+*
+* Returns: true if prime, false otherwise
+*******************************************************************************/
+bool TCPServer::isPrimeBF(LARGEINT n, LARGEINT &divisor) {
+    //std::cout << "Checking if prime: " << n << std::endl;
+    divisor = 0;
+
+    // Take care of simple cases
+    if (n <= 3) {
+        // divisor = n; // Might need to do this? check where its called <TODO>
+        return n > 1;
+    }
+    else if ((n % 2) == 0) {
+        divisor = 2;
+        return false;
+    } else if ((n & 3) == 0) {
+        divisor = 3;
+        return false;
+    }
+
+    // Every prime number greater than 6 is a multiple of 6k+1 or 6k-1 where k is 
+    // a prime number.  This for loop below handles this logic for us.  The key thing
+    // we need to watch out for is an overflow of the datatype when we do the i*i part,
+    // so since we are using a 64 bit int we will use 128 bit ints to hold the i*i math
+    // incase we bust that 64 int size (causing overflow errors). When we make this
+    // class handle 128 bit ints this will have to be 256, and 512 for 256 bit numbers.
+    LARGEINT2X k = n;
+    for (LARGEINT2X i=5; i * i < k; i = i+6) {
+        if ((k % i == 0) || (k % (i+2) == 0)) {
+            divisor = (LARGEINT)i; // Downcast it to a LARGEINT to put it in divisor
+            return false;
+        }
+    }
+    return true;
+}
+
+/**
+ * Print all of the numbers in the prime list to the terminal
+ **/
+void TCPServer::printPrimes(){
+    std::cout << "The list of prime factors for the input number: " << std::endl;
+    std::cout << original_value << std::endl; 
+
+    for(auto const& p : primes){
+        std::cout << p << ", "; 
+    }
+    std::cout << std::endl; 
+    
+    
 }

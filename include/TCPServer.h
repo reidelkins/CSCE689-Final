@@ -16,8 +16,23 @@
 #include <iostream>
 #include <sys/select.h>
 
+#include <list>
+#include <boost/multiprecision/cpp_int.hpp>
+
 
 #include "Server.h"
+
+// Set up the namespace for the boost variables
+namespace mp = boost::multiprecision;
+
+/* "UNSIGNED int type to hold original value and calculations" */
+#define LARGEINT mp::uint128_t
+
+/* "UNSIGNED int twice as large as LARGEINT (bit-wise)" */
+#define LARGEINT2X mp::uint256_t
+
+/* "SIGNED int made of twice the bits as LARGEINT2X" */
+#define LARGESIGNED2X mp::int512_t
 
 class TCPServer : public Server 
 {
@@ -63,6 +78,18 @@ public:
    void listenSvr();
    void shutdown();
 
+   void factor();
+   bool isPrimeBF(LARGEINT n, LARGEINT &divisor);
+   //SHOULD NOT NEED THIS
+   // Simple getter for origional_value field
+   LARGEINT getCurrentValue() {return current_value;}
+   void changeValue(LARGEINT n) {current_value = n;}
+
+   void printPrimes();
+   
+protected:
+   void factor(LARGEINT n);
+
 private:
    // Note, I choose to initialize some variables here instead of the constructor, which I'm able to do as of c++11.
    // The difference between doing it here vs in the constructor is when I init something here it happens at compile time,
@@ -74,6 +101,22 @@ private:
    struct sockaddr_in address; 
    char buf[1024] = {0}; // Used to read in client messages, zero it out here
    int valread = 0; // Used to check any read() calls
+
+   // What we are trying to factor
+   LARGEINT original_value;
+
+   LARGEINT current_value;
+
+   // The list of all the prime factors of origional_value
+   std::list<LARGEINT> primes; 
+
+   // If factor has been called on a number x times, check to see if the number is prime
+   const unsigned int primecheck_depth = 10;
+   const int iters = 0;
+    
+
+
+
 
    std::string initMessage = "====================================================================================\n"
    "Welcome, connection established to the server. Below is a list of possible commands: \n"
