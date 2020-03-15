@@ -86,6 +86,7 @@ public:
    void changeValue(LARGEINT n) {current_value = n;}
 
    void printPrimes();
+   void sendNum(int i);
    
 protected:
    void factor(LARGEINT n);
@@ -109,10 +110,14 @@ private:
 
    // The list of all the prime factors of origional_value
    std::list<LARGEINT> primes; 
+   std::list<LARGEINT> divisors;
 
    // If factor has been called on a number x times, check to see if the number is prime
    const unsigned int primecheck_depth = 10;
-   const int iters = 0;
+   int iters = 0;
+
+   //check if prime factorization is finished
+   bool finished = false;
     
 
 

@@ -85,48 +85,43 @@ void TCPClient::handleConnection() {
     //buf[this->valread] = '\0';
     //std::cout << buf << std::endl;
    */
+   while(1) {
+      this->valread = read (client_sock, buf, 1024);
+      std::cout << "number: " << buf << "\n";
+      LARGEINT number = boost::lexical_cast<LARGEINT>(buf);
+      LARGEINT divisor = calcPollardsRho(number);
+      std::string s = boost::lexical_cast<std::string>(divisor);
+      std::cout << "divisor: " << s << "\n";
+      s.append(" ");
+      s.append(buf);
+      for(int i = 0; i < 1024; i++){
+        this->buf[i] = '\0';
+      }
+      send(this->client_sock, s.c_str(), strlen(s.c_str()), 0);
+
+      // <TODO> add exit
+   }
 
     // Main loop to handle the rest of the client session: 
-    while(1){
-       /*
-        // I like to have this here to let the client know they can type now
-        //std::cout << ">"; 
-        // Get input from client
-        //getline(std::cin, data);
-        // Check to see if the client wants to close the connection
-        //if(data == "exit"){
-        //    send(this->client_sock, data.c_str(), strlen(data.c_str()), 0);
-        //     std::cout << "Closing connection" << std::endl;
-        //    close(this->client_sock); // Don't forget to close the socket
-        //    break;
-        //} else if (data == ""){
-        //    data = "wrong";
-        //}
-        //send(this->client_sock, data.c_str(), strlen(data.c_str()), 0); 
-        //std::cout << "message sent" << std::endl;
-        //this->valread = read (this->client_sock, buf, 1024);
-        //buf[this->valread] = '\0';
-        //std::cout << "From server: " << buf << std::endl;
-      */
+   //  while(1){
         
-        // So instead of printing out what we get from the server here we will be 
-        // 1. putting it into the correct data type (LARGEINT ?)
-        // 2. calling calcPollardsRho(new_thing)
-        // 3. take the output and put it into a string
-        // 4. put string in buf and send it back
-        this->valread = read (this->client_sock, buf, 1024);
-        std::string number (buf);
-        std:: cout << number;
-        // <TODO> add exit
+   //      // So instead of printing out what we get from the server here we will be 
+   //      // 1. putting it into the correct data type (LARGEINT ?)
+   //      // 2. calling calcPollardsRho(new_thing)
+   //      // 3. take the output and put it into a string
+   //      // 4. put string in buf and send it back
+   //      this->valread = read (this->client_sock, buf, 1024);
+   //      std::string number (buf);
+   //      std:: cout << number;
+   //      // <TODO> add exit
         
-        LARGEINT find(number);
-        //Pollard solver = Pollard(find);
-        find = calcPollardsRho(find);
-        std::string s = boost::lexical_cast<std::string>(find);
-        std::cout << s << "\n";
-        send(this->client_sock, s.c_str(), strlen(s.c_str()), 0);
+   //      LARGEINT find(number);
+   //      find = calcPollardsRho(find);
+   //      std::string s = boost::lexical_cast<std::string>(find);
+   //      std::cout << s << "\n";
+   //      send(this->client_sock, s.c_str(), strlen(s.c_str()), 0);
 
-    }
+   //  }
 }
 
 /**********************************************************************************************
@@ -158,6 +153,7 @@ LARGEINT TCPClient::calcPollardsRho(LARGEINT n) {
 
    // Loop until either we find the gcd or gcd = 1
    while (d == 1) {
+      std::cout << "1\n";
       // "Tortoise move" - Update x to f(x) (modulo n)
       // f(x) = x^2 + c f
       x = (modularPow(x, 2, n) + c + n) % n;
