@@ -1,5 +1,4 @@
 #include "TCPClient.h"
-//#include "Pollard.h"
 
 #include <iostream>
 #include <list>
@@ -8,6 +7,8 @@
 #include <boost/multiprecision/cpp_int.hpp>
 #include <boost/integer/common_factor.hpp>
 
+
+//This note is from Capt. Joshua H. White's HW1. Our group used this HW as a base for the client/server used in this assignment
 /**
  * I am using the following sites as references to create this file: 
  * https://www.geeksforgeeks.org/socket-programming-cc/
@@ -69,22 +70,12 @@ void TCPClient::connectTo(const char *ip_addr, unsigned short port) {
 }
 
 /**********************************************************************************************
- * handleConnection - Performs a loop that checks if the connection is still open, then 
- *                    looks for user input and sends it if available. Finally, looks for data
- *                    on the socket and sends it.
+ * handleConnection - While client is still connected, get number from server and run Pollard's
+ * Rho on that number. Return the value from Pollard's Rho combined with original number.
  * 
  *    Throws: socket_error for recoverable errors, runtime_error for unrecoverable types
 **********************************************************************************************/
 void TCPClient::handleConnection() {
-   /*
-    // Used in the main loop of the client connection
-    //std::string data; 
-
-    // Read in the welcome message that the server sends upon connection
-    //this->valread = read (client_sock, buf, 1024);
-    //buf[this->valread] = '\0';
-    //std::cout << buf << std::endl;
-   */
    while(1) {
       this->valread = read (client_sock, buf, 1024);
       std::cout << "number: " << buf << "\n";
@@ -94,34 +85,14 @@ void TCPClient::handleConnection() {
       std::cout << "divisor: " << s << "\n";
       s.append(" ");
       s.append(buf);
+      //clears buf
       for(int i = 0; i < 1024; i++){
         this->buf[i] = '\0';
       }
       send(this->client_sock, s.c_str(), strlen(s.c_str()), 0);
-
-      // <TODO> add exit
+     
    }
 
-    // Main loop to handle the rest of the client session: 
-   //  while(1){
-        
-   //      // So instead of printing out what we get from the server here we will be 
-   //      // 1. putting it into the correct data type (LARGEINT ?)
-   //      // 2. calling calcPollardsRho(new_thing)
-   //      // 3. take the output and put it into a string
-   //      // 4. put string in buf and send it back
-   //      this->valread = read (this->client_sock, buf, 1024);
-   //      std::string number (buf);
-   //      std:: cout << number;
-   //      // <TODO> add exit
-        
-   //      LARGEINT find(number);
-   //      find = calcPollardsRho(find);
-   //      std::string s = boost::lexical_cast<std::string>(find);
-   //      std::cout << s << "\n";
-   //      send(this->client_sock, s.c_str(), strlen(s.c_str()), 0);
-
-   //  }
 }
 
 /**********************************************************************************************
@@ -134,7 +105,7 @@ void TCPClient::closeConn() {
 }
 
 LARGEINT TCPClient::calcPollardsRho(LARGEINT n) {
-
+   //this means n = 1, 2 or 3. should never occur because factor() would take out all 2 and 3s
    if (n <= 3){
       return n;
    }
@@ -142,22 +113,31 @@ LARGEINT TCPClient::calcPollardsRho(LARGEINT n) {
    // Initialize our random number generator
    srand(time(NULL));
 
-   // pick a random number from the range [2, N)
-   LARGEINT2X x = (rand()%(n-2)) + 2;
+   /**ADAPTED ALGORITHM*************************
+   * Instead of X being 2-N and C being 1-N, test by using sqrt(n)
+   * This is a suggest improvisation noted at this link:
+   * https://www.geeksforgeeks.org/pollards-rho-algorithm-prime-factorization/
+   *
+   ********************************************/
+   LARGEINT2X nroot = mp::sqrt(n);
+   //do this to make sure there is no divide by 0 or negative number
+   if(nroot <= 2) {
+      nroot++;
+   }
+  // pick a random number from the range [2, N)
+   LARGEINT2X x = (rand()%(nroot-2)) + 2;
    LARGEINT2X y = x;    // Per the algorithm
 
    // random number for c = [1, N)
-   LARGEINT2X c = (rand()%(n-1)) + 1;
+   LARGEINT2X c = (rand()%(nroot-1)) + 1;
 
    LARGEINT2X d = 1;
 
    // Loop until either we find the gcd or gcd = 1
    while (d == 1) {
-      std::cout << "1\n";
       // "Tortoise move" - Update x to f(x) (modulo n)
       // f(x) = x^2 + c f
       x = (modularPow(x, 2, n) + c + n) % n;
-
       // "Hare move" - Update y to f(f(y)) (modulo n)
       y = (modularPow(y, 2, n) + c + n) % n;
       y = (modularPow(y, 2, n) + c + n) % n;

@@ -26,10 +26,11 @@
 TCPServer::TCPServer() : Server() {
     FD_ZERO(&master);
     FD_ZERO(&read_fds);
-    LARGEINT find("14713846130130481394813");
+    LARGEINT find("169577392608533");
     
     original_value = find;
     current_value = original_value;
+    std::cout << "Finding the prime factorization for " << current_value << ".\n"; 
     factor();
 }
 
@@ -189,38 +190,46 @@ void TCPServer::handleExistingClient(int i){
         close(i); // Make sure we close out the socket
         FD_CLR(i, &(this->master)); // Remove the client socket from the master FD list
     } else {
+        //check for if last prime divisor has been found so if multiple clients
+        //are working on same number only the first one back affects are primes list
         if(!finished) {
+            //separates the return value from client into the original number and the divisor returned
             std::vector<std::string> results;
             boost::split(results, buf, [](char c){return c == ' ';});
-            std::cout << results[0] << "\n" << results[1] << "\n";
             LARGEINT div = boost::lexical_cast<LARGEINT>(results[0]);
             LARGEINT number = boost::lexical_cast<LARGEINT>(results[1]);
 
-            //for now it means got a divisor, will need to change when sending back both numbers
-            if(number == getCurrentValue()) {   
+            //this means no other client has gotten back with a different divisor first
+            if(number == getCurrentValue()) {
+                //checks divisor != number it means client found a divisor
                 if(div != number) {
                     divisors.push_back(div);
                     number = getCurrentValue() / div;
-                    std::cout << "divisor: " << div << "\n";
+                    std::cout << "Divisor found: " << div << "\n";
+                    std::cout << "The new number to be factored is: " << number << "\n";
                     changeValue(number);
+                    //resets iters count
                     iters = 0;
                 }
-
+                
                 if(iters++ == primecheck_depth ) {
                     iters = 0;
                     LARGEINT divisor;
                     LARGEINT n = getCurrentValue();
+                    //if the current number is prime
                     if (isPrimeBF(n, divisor)) {
-                        std::cout << "Prime found,, T: " << n << std::endl;
+                        std::cout << "Prime found: " << n << std::endl;
                         primes.push_back(n);
 
                         //fully factored
                         if(divisors.empty()) {
                             printPrimes();
                             finished = true;
-                            return; //NEED TO END ALL CONNECTIONS HERE
+                            return;
                         } else {
-                            changeValue(divisors.front());
+                            LARGEINT x = divisors.front();
+                            std::cout << "The new number to be factored is: " << x << "\n";
+                            changeValue(x);
                             divisors.pop_front();
 
                         }
@@ -228,10 +237,12 @@ void TCPServer::handleExistingClient(int i){
                         std::cout << "Prime found: " << divisor << std::endl;
                         primes.push_back(divisor);
                         n = n / divisor;
+                        std::cout << "The new number to be factored is: " << n << "\n";
                         changeValue(n);
                     }		 
                 }
             }
+            //gives work to the same client which just returned
             sendNum(i);
         }
 
@@ -322,7 +333,7 @@ void TCPServer::factor(){
       std::cout << "Prime Found: 2\n";
 
       newval = newval / 2;
-      std::cout << "got a new number after div 2: " << newval << "\n";
+      std::cout << "The new number to be factored is: " << newval << "\n";
    } 
 
    // Now the 3s
@@ -330,7 +341,7 @@ void TCPServer::factor(){
       primes.push_back(3);
       std::cout << "Prime Found: 3\n";
       newval = newval / 3;
-      std::cout << "got a new number after div 3: " << newval << "\n";
+      std::cout << "The new number to be factored is: " << newval << "\n";
    }
    changeValue(newval);
 
@@ -350,12 +361,10 @@ void TCPServer::factor(){
 * Returns: true if prime, false otherwise
 *******************************************************************************/
 bool TCPServer::isPrimeBF(LARGEINT n, LARGEINT &divisor) {
-    //std::cout << "Checking if prime: " << n << std::endl;
     divisor = 0;
 
     // Take care of simple cases
     if (n <= 3) {
-        // divisor = n; // Might need to do this? check where its called <TODO>
         return n > 1;
     }
     else if ((n % 2) == 0) {
@@ -388,16 +397,20 @@ bool TCPServer::isPrimeBF(LARGEINT n, LARGEINT &divisor) {
 void TCPServer::printPrimes(){
     std::cout << "The list of prime factors for the input number: " << std::endl;
     std::cout << original_value << std::endl; 
-
+    primes.sort();
     for(auto const& p : primes){
-        std::cout << p << ", "; 
+        if(p == primes.back()) {
+            std::cout << p;
+        } else {
+            std::cout << p << ", "; 
+        }
     }
     std::cout << std::endl; 
     
 }
 
-void TCPServer::sendNum(int i) {
+//sends the current number to the client
+void TCPServer::sendNum(int client) {
     std::string msg = boost::lexical_cast<std::string>(getCurrentValue());
-    std::cout << msg << "\n";
-    sockSend(i, msg.c_str());
+    sockSend(client, msg.c_str());
 }

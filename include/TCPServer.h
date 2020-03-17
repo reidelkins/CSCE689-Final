@@ -80,12 +80,14 @@ public:
 
    void factor();
    bool isPrimeBF(LARGEINT n, LARGEINT &divisor);
-   //SHOULD NOT NEED THIS
-   // Simple getter for origional_value field
+  
    LARGEINT getCurrentValue() {return current_value;}
+   //changes value for what is set to be factored next
    void changeValue(LARGEINT n) {current_value = n;}
 
    void printPrimes();
+   //sends the socket connected to the current client
+   //where work needs to be sent
    void sendNum(int i);
    
 protected:
@@ -103,13 +105,16 @@ private:
    char buf[1024] = {0}; // Used to read in client messages, zero it out here
    int valread = 0; // Used to check any read() calls
 
-   // What we are trying to factor
+   // What we are trying to factor oringally
    LARGEINT original_value;
 
+   //current value that is being factored
    LARGEINT current_value;
 
    // The list of all the prime factors of origional_value
-   std::list<LARGEINT> primes; 
+   std::list<LARGEINT> primes;
+
+   //numbers sent back from client that still need to be factored
    std::list<LARGEINT> divisors;
 
    // If factor has been called on a number x times, check to see if the number is prime
@@ -119,50 +124,6 @@ private:
    //check if prime factorization is finished
    bool finished = false;
     
-
-
-
-
-   std::string initMessage = "====================================================================================\n"
-   "Welcome, connection established to the server. Below is a list of possible commands: \n"
-   "hello - Displays a greeting.\n"
-   "1, 2, 3, 4, 5 - Displays 5 unique facts about the c++ programming language!\n"
-   "passwd - Not currently implemented, will allow the user to change a password.\n"
-   "exit - Will disconnect the user.\n"
-   "menu - Will display a list of available commands.\n"
-   "====================================================================================\n"; 
-
-   std::string commands = "=======================================================================\n"
-   "Below is a list of possible commands: \n"
-   "hello - Displays a greeting.\n"
-   "1, 2, 3, 4, 5 - Displays 5 unique facts about the c++ programming language!\n"
-   "passwd - Not currently implemented, will allow the user to change a password.\n"
-   "exit - Will disconnect the user.\n"
-   "menu - Will display a list of available commands.\n"
-   "====================================================================================\n";
-
-   std::string incorrect = "=======================================================================\n"
-   "Your input did not match one of the possible choicse, please try again: \n"
-   "hello - Displays a greeting.\n"
-   "1, 2, 3, 4, 5 - Displays 5 unique facts about the c++ programming language!\n"
-   "passwd - Not currently implemented, will allow the user to change a password.\n"
-   "exit - Will disconnect the user.\n"
-   "menu - Will display a list of available commands.\n"
-   "====================================================================================\n";
-
-   bool secretMenu = false;
-
-   std::string secretMenuText = "=======================================================================\n"
-   "Your input did not match one of the possible choicse, please try again: \n"
-   "hello - Displays a greeting.\n"
-   "1, 2, 3, 4, 5 - Displays 5 unique facts about the c++ programming language!\n"
-   "passwd - Not currently implemented, will allow the user to change a password.\n"
-   "exit - Will disconnect the user.\n"
-   "menu - Will display a list of available commands.\n"
-   "uuddlrlrab - I see you've cracked the code... it will not be so easy next time!\n"
-   "====================================================================================\n";
-
-
    fd_set master; // Master FD list
    fd_set read_fds; // list used for select()
 
